@@ -1,25 +1,218 @@
+#include "Particle.h"
 #include "neopixel/neopixel.h"
 #include <math.h>
 
 #define PIXEL_COUNT 8
+// #define PIXEL_COUNT 60
 #define PIXEL_PIN D2
 #define PIXEL_TYPE WS2812B
+#define PI 3.1415926f
 
 Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 static uint8_t curpix = 0;
 
-void SimpleSpinner() {
+void Clear() {
     for(int i=0; i<PIXEL_COUNT; i++) {
-        int x = (i==curpix) ? 64 : 4;
-        strip.setPixelColor(i, 0, 0, x);
+        strip.setPixelColor(i, 0, 0, 0);
+    }
+    strip.show();
+}
+
+void SimpleSpinner() {
+    Clear();
+    for(int j=0; j<(PIXEL_COUNT*10); j++) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            int x = (i==curpix) ? 64 : 4;
+            strip.setPixelColor(i, 0, 0, x);
+        }
+
+        strip.show();
+
+        curpix += 1;
+        curpix %= PIXEL_COUNT;
+
+        delay(500 / PIXEL_COUNT);
+    }
+}
+
+void DingDone() {
+    Clear();
+
+    for(int j=0; j<3; j++) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            strip.setPixelColor(i, 64, 0, 0);
+        }
+        strip.show();
+        delay(500);
+
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            strip.setPixelColor(i, 0, 0, 0);
+        }
+        strip.show();
+        delay(500);
+    }
+}
+
+void SimpleCountdown() {
+    Clear();
+    // Start all on
+    for(int i=0; i<PIXEL_COUNT; i++) {
+        strip.setPixelColor(i, 64, 0, 0);
+    }
+    strip.show();
+    delay(1000);
+
+    for(int i=0; i<PIXEL_COUNT; i++) {
+        strip.setPixelColor(i, 0, 0, 0);
+        strip.show();
+        delay(1000);
     }
 
-    strip.show();
+    delay(2000);
 
-    curpix += 1;
-    curpix %= PIXEL_COUNT;
+    DingDone();
 
-    delay(500 / PIXEL_COUNT);
+}
+
+void RBChaser() {
+    Clear();
+
+    int idx = 0;
+
+    for(int k=0; k<(PIXEL_COUNT*10); k++) {
+
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            if(i==idx) {
+                strip.setPixelColor(i, 255, 0, 0);
+            }
+            else if(((i+(PIXEL_COUNT/2))%PIXEL_COUNT) == idx) {
+                strip.setPixelColor(i, 0, 0, 255);
+            }
+            else {
+                strip.setPixelColor(i, 0, 0, 0);
+            }
+        }
+        idx += 1;
+        idx %= PIXEL_COUNT;
+
+        strip.show();
+        delay(500/PIXEL_COUNT);
+    }
+}
+
+void TimeBreath() {
+    Clear();
+
+    for(int k=0; k<(10000/5); k++) {
+        float val = ((exp(sin(millis()/2000.0*PI)) - 0.36787944)*108.0);
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            strip.setPixelColor(i, val/2, val/2, val/2);
+        }
+        strip.show();
+        delay(5);
+    }
+}
+
+void FadeAround() {
+    Clear();
+
+    const int max = 255 * PIXEL_COUNT;
+
+    for(int j=max; j>0; j--) {
+        int running = j;
+        for(int i=PIXEL_COUNT-1; i>=0; i--) {
+            int pix = (running >= 255) ? 255 : running;
+            strip.setPixelColor(i, pix, 0, 0);
+            running -= pix;
+        }
+        strip.show();
+        delay(2);
+    }
+
+    DingDone();
+
+    for(int j=max; j>0; j--) {
+        int running = j;
+        for(int i=PIXEL_COUNT-1; i>=0; i--) {
+            int pix = (running >= 255) ? 255 : running;
+            strip.setPixelColor(i, pix, 0, 0);
+            running -= pix;
+        }
+        strip.show();
+        delay(5);
+    }
+
+    DingDone();
+
+    for(int j=max; j>0; j--) {
+        int running = j;
+        for(int i=PIXEL_COUNT-1; i>=0; i--) {
+            int pix = (running >= 255) ? 255 : running;
+            strip.setPixelColor(i, pix, 0, 0);
+            running -= pix;
+        }
+        strip.show();
+        delay(10);
+    }
+
+    DingDone();
+}
+
+void FadeDown() {
+    Clear();
+
+    for(int j=255; j>=0; j--) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            strip.setPixelColor(i, 0, 0, j);
+        }
+        strip.show();
+        delay(50);
+    }
+
+    DingDone();
+}
+
+void FadeUpDown() {
+    Clear();
+
+    for(int j=32; j<=255; j++) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            strip.setPixelColor(i, 0, j, 0);
+        }
+        strip.show();
+        delay(40);
+    }
+
+    for(int j=255; j>=0; j--) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            int pix = (j < 24) ? 24 : j;
+            strip.setPixelColor(i, 0, pix, 0);
+        }
+        strip.show();
+        delay(40);
+    }
+
+    DingDone();
+}
+
+void FakeClock() {
+    for(int h=0; h<PIXEL_COUNT; h++) {
+        for(int m=0; m<PIXEL_COUNT; m++) {
+            for(int s=0; s<PIXEL_COUNT; s++) {
+                for(int x=0; x<PIXEL_COUNT; x++) {
+                    int r = (x==h) ? 128 : 0;
+                    int g = (x==m) ? 128 : 0;
+                    int b = (x==s) ? 128 : 0;
+
+                    strip.setPixelColor(x, r, g, b);
+                }
+                strip.show();
+                delay(50);
+            }
+        }
+    }
+
+    DingDone();
 }
 
 // ---------------------------------------------------------------------------
@@ -31,6 +224,14 @@ void LedSetup() {
 
 void LedPlay() {
     for(;;) {
+        Particle.publish("Heartbeat", "Hello :)");
+        FadeUpDown();
+        FadeDown();
+        FadeAround();
+        TimeBreath();
+        RBChaser();
         SimpleSpinner();
+        SimpleCountdown();
+        FakeClock();
     }
 }
