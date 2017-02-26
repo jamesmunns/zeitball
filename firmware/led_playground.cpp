@@ -106,7 +106,7 @@ void TimeBreath() {
     for(int k=0; k<(10000/5); k++) {
         float val = ((exp(sin(millis()/2000.0*PI)) - 0.36787944)*108.0);
         for(int i=0; i<PIXEL_COUNT; i++) {
-            strip.setPixelColor(i, val/2, val/2, val/2);
+            strip.setPixelColor(i, val, val, val);
         }
         strip.show();
         delay(5);
@@ -219,12 +219,74 @@ void FakeClock() {
 
 void LedSetup() {
     strip.begin();
-    strip.show();
+    Clear();
+}
+
+volatile bool busy = false;
+
+// Hmm. I sure hope String is implemented as a heap variable, rather than as a fixed
+//   compile-time-sized value. Otherwise writing to `command` is a really bad idea.
+//   Consider switching to c-str's.
+static String command = "";
+
+int LedCommand(String eventData) {
+    if(busy) {
+        return -100;
+    } else {
+        busy = true;
+        command = eventData;
+    }
+
+    return 0;
+}
+
+void LedHandler() {
+    if(!busy) {
+        return;
+    }
+
+    bool handled = true;
+
+    // TODO, process message
+    if(command == "FadeUpDown") {
+        FadeUpDown();
+    } else if(command == "FadeDown") {
+        FadeDown();
+    } else if(command == "FadeAround") {
+        FadeAround();
+    } else if(command == "TimeBreath") {
+        TimeBreath();
+    } else if(command == "RBChaser") {
+        RBChaser();
+    } else if(command == "SimpleSpinner") {
+        SimpleSpinner();
+    } else if(command == "SimpleCountdown") {
+        SimpleCountdown();
+    } else if(command == "FakeClock") {
+        FakeClock();
+    } else {
+        handled = false;
+        DingDone();
+    }
+
+    Clear();
+
+
+    if(handled) {
+        command.concat(" complete");
+    } else {
+        command.concat(" error: unknown");
+    }
+
+    Particle.publish("status", command);
+
+    command = "";
+    busy = false;
+
 }
 
 void LedPlay() {
     for(;;) {
-        Particle.publish("Heartbeat", "Hello :)");
         FadeUpDown();
         FadeDown();
         FadeAround();

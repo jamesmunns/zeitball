@@ -4,12 +4,16 @@
 void setup() // Put setup code here to run once
 {
     pinMode(D7, OUTPUT);
-    Serial.begin(57600);
     LedSetup();
+
+    Particle.function("demo", LedCommand);
 }
 
 void loop() // Put code here to loop forever
 {
-    Serial.println("Hello, World!");
-    LedPlay();
+    Particle.publish("Heartbeat", "Hello :)");
+    for(int i=0; i<100; i++) {
+        LedHandler();
+        delay(100);
+    }
 }
