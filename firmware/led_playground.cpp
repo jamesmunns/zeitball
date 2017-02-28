@@ -10,6 +10,7 @@
 
 Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 static uint8_t curpix = 0;
+static float exponent = 4.0f;
 
 void Clear() {
     for(int i=0; i<PIXEL_COUNT; i++) {
@@ -216,9 +217,61 @@ void FakeClock() {
 }
 
 // ---------------------------------------------------------------------------
+// Fancy Math
+
+double deg2rad(double x) {
+    return (PI*x) / 180.0f;
+}
+
+typedef struct {
+    double x;
+    double y;
+    double r;
+    double deg;
+    double intensity;
+} Point_t;
+
+static Point_t leds[PIXEL_COUNT];
+
+void fancy_init() {
+
+    for(int i=0; i < PIXEL_COUNT; i++) {
+        leds[i].deg = (360.0f * (double)i) / (double)PIXEL_COUNT;
+        leds[i].r = 1.0f;
+
+        leds[i].x = sin(deg2rad(leds[i].deg));
+        leds[i].y = cos(deg2rad(leds[i].deg));
+
+        // printf("%d: %.2f %.2f %.2f %.2f\n", i, leds[i].deg, leds[i].r, leds[i].x, leds[i].y);
+    }
+}
+
+void fancy_light(float x, float y) {
+
+    for(int l=0; l<PIXEL_COUNT; l++) {
+        double d_x = x - leds[l].x;
+        double d_y = y - leds[l].y;
+
+        float a = sqrt(d_x*d_x + d_y*d_y);
+        // float b = exp2(a);
+        float b = pow(exponent, a);
+        float c = 1.0f / b;
+
+        leds[l].intensity = c;
+
+        int boom = 255.0f * c;
+
+        strip.setPixelColor(l, boom, 0, 0);
+    }
+
+    strip.show();
+}
+
+// ---------------------------------------------------------------------------
 
 void LedSetup() {
     strip.begin();
+    fancy_init();
     Clear();
 }
 
@@ -285,15 +338,52 @@ void LedHandler() {
 
 }
 
+void fancy_demo() {
+    // cartesian demo
+    // for(float x=-1.0f; x < 1.0f; x+=0.5f) {
+    //     for(float y=1.0f; y > -1.0f; y-=0.5f) {
+    //         fancy_light(x, y);
+    //         delay(500);
+    //     }
+    // }
+
+    // Circular demo
+    // for(float e=2.0f; e<10.0f; e+=1.0f) {
+    //     exponent = e;
+    //     for(int j=0; j<20; j++) {
+    //         for(int i=0; i<PIXEL_COUNT; i++) {
+    //             fancy_light(leds[i].x, leds[i].y);
+    //             delay(500 / PIXEL_COUNT);
+    //         }
+    //     }
+
+    //     DingDone();
+    // }
+
+    // Other Circular demo
+    // for(float e=2.0f; e<4.1f; e+=0.5f) {
+        // exponent = e;
+        for(float d=0; d<720; d+=1.0) {
+            float x = sin(deg2rad(d));
+            float y = cos(deg2rad(d));
+            fancy_light(x,y);
+            delay(10);
+        }
+        DingDone();
+    // }
+
+}
+
 void LedPlay() {
     for(;;) {
-        FadeUpDown();
-        FadeDown();
-        FadeAround();
-        TimeBreath();
-        RBChaser();
-        SimpleSpinner();
-        SimpleCountdown();
-        FakeClock();
+        fancy_demo();
+        // FadeUpDown();
+        // FadeDown();
+        // FadeAround();
+        // TimeBreath();
+        // RBChaser();
+        // SimpleSpinner();
+        // SimpleCountdown();
+        // FakeClock();
     }
 }
