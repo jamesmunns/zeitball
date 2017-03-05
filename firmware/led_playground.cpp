@@ -4,13 +4,14 @@
 
 #define PIXEL_COUNT 8
 // #define PIXEL_COUNT 60
-#define PIXEL_PIN D2
+// #define PIXEL_PIN D2
+#define PIXEL_PIN D3
 #define PIXEL_TYPE WS2812B
 #define PI 3.1415926f
 
 Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 static uint8_t curpix = 0;
-static float exponent = 4.0f;
+static float exponent = 16.0f;
 
 void Clear() {
     for(int i=0; i<PIXEL_COUNT; i++) {
@@ -23,7 +24,20 @@ void SimpleSpinner() {
     Clear();
     for(int j=0; j<(PIXEL_COUNT*10); j++) {
         for(int i=0; i<PIXEL_COUNT; i++) {
-            int x = (i==curpix) ? 64 : 4;
+            int x = (i==curpix) ? 255 : 0;
+            strip.setPixelColor(i, 0, 0, x);
+        }
+
+        strip.show();
+
+        curpix += 1;
+        curpix %= PIXEL_COUNT;
+
+        delay(500 / PIXEL_COUNT);
+    }
+    for(int j=0; j<(PIXEL_COUNT*10); j++) {
+        for(int i=0; i<PIXEL_COUNT; i++) {
+            int x = (i==curpix) ? 255 : 0;
             strip.setPixelColor(i, 0, 0, x);
         }
 
@@ -259,9 +273,11 @@ void fancy_light(float x, float y) {
 
         leds[l].intensity = c;
 
-        int boom = 255.0f * c;
+        // int boom = 255.0f * c;
+        int boom = 350.0f * c;
 
         strip.setPixelColor(l, boom, 0, 0);
+
     }
 
     strip.show();
@@ -363,27 +379,40 @@ void fancy_demo() {
     // Other Circular demo
     // for(float e=2.0f; e<4.1f; e+=0.5f) {
         // exponent = e;
-        for(float d=0; d<720; d+=1.0) {
-            float x = sin(deg2rad(d));
-            float y = cos(deg2rad(d));
+        for(float d=0; d<(5 * 360); d+=2.0) {
+            float x = 0.7f * sin(deg2rad(d));
+            float y = 0.7f * cos(deg2rad(d));
             fancy_light(x,y);
             delay(10);
         }
-        DingDone();
+        // DingDone();
     // }
 
 }
 
 void LedPlay() {
     for(;;) {
-        fancy_demo();
-        // FadeUpDown();
+        // fancy_demo();
+
         // FadeDown();
         // FadeAround();
-        // TimeBreath();
-        // RBChaser();
+
+        if(LOW == digitalRead(D0)) {
+            FadeUpDown();
+            // fancy_demo();
+        } else if(LOW == digitalRead(D1)) {
+            TimeBreath();
+            // FakeClock();
+        } else if(LOW == digitalRead(D2)) {
+            // RBChaser();
+            SimpleSpinner();
+        } else {
+            // DingDone();
+            RBChaser();
+        }
         // SimpleSpinner();
         // SimpleCountdown();
         // FakeClock();
+        delay(25);
     }
 }

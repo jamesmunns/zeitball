@@ -4,7 +4,7 @@
 
 #define PIXEL_COUNT 8
 // #define PIXEL_COUNT 60
-#define PIXEL_PIN D2
+#define PIXEL_PIN D3
 #define PIXEL_TYPE WS2812B
 
 extern Adafruit_NeoPixel strip;
@@ -92,6 +92,20 @@ bool pom_start(Pom_Length_t pomlen) {
     pom_update();
 
     return true;
+}
+
+void pom_poll() {
+    if(pom_data.is_active) {
+        return;
+    }
+
+    if(LOW == digitalRead(D0)) {
+        pom_start(THIRTY_MINS);
+    } else if (LOW == digitalRead(D1)) {
+        pom_start(FIVE_MINS);
+    } else if (LOW == digitalRead(D2)) {
+        pom_start(FIFTEEN_MINS);
+    }
 }
 
 int PomCommand(String eventData) {
