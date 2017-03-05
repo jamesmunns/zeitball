@@ -1,13 +1,9 @@
+#ifdef NOT_A_REAL_DEF
+
 #include "Particle.h"
 #include "neopixel/neopixel.h"
 #include <math.h>
 
-#define PIXEL_COUNT 8
-// #define PIXEL_COUNT 60
-// #define PIXEL_PIN D2
-#define PIXEL_PIN D3
-#define PIXEL_TYPE WS2812B
-#define PI 3.1415926f
 
 Adafruit_NeoPixel strip(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 static uint8_t curpix = 0;
@@ -416,3 +412,5 @@ void LedPlay() {
         delay(25);
     }
 }
+
+#endif

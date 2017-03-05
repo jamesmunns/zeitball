@@ -1,20 +1,21 @@
 #include "Particle.h"
 #include "neopixel/neopixel.h"
+// #include "config.h"
+// #include "math.h"
+// #include "pomodoro.h"
+// #include "ring.h"
 #include "pomodoro.h"
-
-#define PIXEL_COUNT 8
-// #define PIXEL_COUNT 60
-#define PIXEL_PIN D3
-#define PIXEL_TYPE WS2812B
+#include "ring.h"
+#include "math.h"
+#include "config.h"
 
 extern Adafruit_NeoPixel strip;
-extern void Clear();
 
 typedef enum
 {
-    THIRTY_MINS     = (30 * 10),
-    FIVE_MINS       = ( 5 * 10),
-    FIFTEEN_MINS    = (15 * 10),
+    THIRTY_MINS     = (30 * 60),
+    FIVE_MINS       = ( 5 * 60),
+    FIFTEEN_MINS    = (15 * 60),
     INVALID         = (0)
 } Pom_Length_t;
 
@@ -31,7 +32,7 @@ static Pomodoro_t pom_data;
 void pom_reset() {
     // Clear the screen
     if(pom_data.is_active) {
-        Clear();
+        ring_clear();
     }
 
     pom_data = {
@@ -43,9 +44,14 @@ void pom_reset() {
 }
 
 void pom_init() {
-    strip.begin();
-    Clear();
+    ring_clear();
     pom_reset();
+}
+
+int bound(int n, int minval, int maxval) {
+    const int lowbound = (n < minval) ? minval : n;
+    const int retval = (lowbound > maxval) ? maxval : lowbound;
+    return retval;
 }
 
 void pom_update() {
@@ -61,12 +67,28 @@ void pom_update() {
     }
 
     float progress_pct = (float)(now - pom_data.start_time) / (float)pom_data.pom_length;
-    const float all_on = (float)PIXEL_COUNT * 255.0f;
+    const float all_on = (float)PIXEL_COUNT * MAX_BRIGHTNESS_F;
     int on_now = (int)(all_on * (1.0f - progress_pct));
 
     for(int i=PIXEL_COUNT-1; i>=0; i--) {
-        int pix = (on_now >= 255) ? 255 : on_now;
-        strip.setPixelColor(i, pix, 0, 0);
+        // int pix = (on_now >= MAX_BRIGHTNESS) ? MAX_BRIGHTNESS : on_now;
+        int pix = bound(on_now, 10, MAX_BRIGHTNESS);
+
+        switch(pom_data.pom_length) {
+            case THIRTY_MINS:
+                strip.setPixelColor(i, 0, 0, pix);
+                break;
+            case FIVE_MINS:
+                strip.setPixelColor(i, pix, 0, 0);
+                break;
+            case FIFTEEN_MINS:
+                strip.setPixelColor(i, 0, pix, 0);
+                break;
+            default:
+                pom_reset();
+                return;
+        }
+
         on_now -= pix;
     }
     strip.show();
@@ -99,11 +121,11 @@ void pom_poll() {
         return;
     }
 
-    if(LOW == digitalRead(D0)) {
+    if(LOW == digitalRead(LEFT_BUTTON)) {
         pom_start(THIRTY_MINS);
-    } else if (LOW == digitalRead(D1)) {
+    } else if (LOW == digitalRead(CENTER_BUTTON)) {
         pom_start(FIVE_MINS);
-    } else if (LOW == digitalRead(D2)) {
+    } else if (LOW == digitalRead(RIGHT_BUTTON)) {
         pom_start(FIFTEEN_MINS);
     }
 }
@@ -117,6 +139,9 @@ int PomCommand(String eventData) {
         retval = pom_start(FIVE_MINS) ? 0 : -5;
     } else if (eventData == "15") {
         retval = pom_start(FIFTEEN_MINS) ? 0 : -15;
+    } else if (eventData == "stop") {
+        pom_reset();
+        retval = 0;
     }
 
     return retval;
